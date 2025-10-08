@@ -1,34 +1,71 @@
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Account {
     private int id;
+    private String accountNumber;
+    private String ownerName;
     private double balance;
     private double annualInterestRate;
     private Date dateCreated;
+    private List<String> transactionHistory;
+    private static int nextId = 1;
 
-    // Безаргументный конструктор
     public Account() {
-        this.id = 0;
+        this.id = nextId++;
+        this.accountNumber = "";
+        this.ownerName = "";
         this.balance = 0;
         this.annualInterestRate = 0;
         this.dateCreated = new Date();
+        this.transactionHistory = new ArrayList<>();
     }
 
-    // Конструктор с указанными id и balance
     public Account(int id, double balance) {
         this.id = id;
+        this.accountNumber = String.valueOf(id);
+        this.ownerName = "Client " + id;
         this.balance = balance;
         this.annualInterestRate = 0;
         this.dateCreated = new Date();
+        this.transactionHistory = new ArrayList<>();
+        addTransaction("Account created with initial balance: $" + balance);
     }
 
-    // Getter и setter методы
+    public Account(String accountNumber, String ownerName, double initialBalance) {
+        this.id = nextId++; // Автоматически генерируем ID
+        this.accountNumber = accountNumber;
+        this.ownerName = ownerName;
+        this.balance = initialBalance;
+        this.annualInterestRate = 0;
+        this.dateCreated = new Date();
+        this.transactionHistory = new ArrayList<>();
+        addTransaction("Account created with initial balance: $" + initialBalance);
+    }
+
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
     }
 
     public double getBalance() {
@@ -51,23 +88,44 @@ public class Account {
         return dateCreated;
     }
 
-    // Метод для получения ежемесячного процента
-    public double getMonthlyInterest() {
-        double monthlyInterestRate = annualInterestRate / 12 / 100;
-        return balance * monthlyInterestRate;
+    public List<String> getTransactionHistory() {
+        return new ArrayList<>(transactionHistory);
     }
 
-    // Метод для снятия денег
+    public double getMonthlyInterest() {
+        double monthlyRate = annualInterestRate / 100 / 12;
+        return balance * monthlyRate;
+    }
+
     public void withdraw(double amount) {
         if (amount > 0 && amount <= balance) {
             balance -= amount;
+            addTransaction("Withdraw: $" + amount);
+        } else {
+            String message = "Failed withdraw attempt: $" + amount + ". Insufficient funds or invalid amount.";
+            System.out.println(message);
+            addTransaction(message);
         }
     }
 
-    // Метод для пополнения счета
     public void deposit(double amount) {
         if (amount > 0) {
             balance += amount;
+            addTransaction("Deposit: $" + amount);
+        } else {
+            String message = "Failed deposit attempt: $" + amount + ". Amount must be positive.";
+            System.out.println(message);
+            addTransaction(message);
         }
+    }
+
+    private void addTransaction(String transaction) {
+        String timestamp = new Date().toString();
+        transactionHistory.add(timestamp + " - " + transaction);
+    }
+
+    public String getAccountInfo() {
+        return String.format("Account: %s, Owner: %s, Balance: $%.2f, Created: %s",
+                accountNumber, ownerName, balance, dateCreated);
     }
 }

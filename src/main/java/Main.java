@@ -1,144 +1,177 @@
 import java.util.Scanner;
 
 public class Main {
-    private static Account[] accounts = new Account[10];
+    private static BankService bankService = new BankService();
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        initializeAccounts();
-        runBankApplication();
-    }
+        System.out.println("=== Банковская система ===");
 
-    // Инициализация 10 счетов
-    private static void initializeAccounts() {
-        for (int i = 0; i < 10; i++) {
-            accounts[i] = new Account(i, 10000);
-        }
-        System.out.println("Банковская система запущена. Создано 10 счетов.");
-    }
+        initializeSampleData();
 
-    // Запуск банковского приложения
-    private static void runBankApplication() {
-        Scanner scanner = new Scanner(System.in);
-
-        while (true) {
-            // Запрос ID счета
-            int accountId = getValidAccountId(scanner);
-
-            // Отображение главного меню для выбранного счета
-            showMainMenu(scanner, accountId);
-        }
-    }
-
-    // Получение корректного ID счета
-    private static int getValidAccountId(Scanner scanner) {
-        int accountId;
-
-        while (true) {
-            System.out.print("\nВведите ID счета (0-9): ");
-            if (scanner.hasNextInt()) {
-                accountId = scanner.nextInt();
-                if (accountId >= 0 && accountId < 10) {
-                    break;
-                } else {
-                    System.out.println("Неверный ID. Пожалуйста, введите ID от 0 до 9.");
-                }
-            } else {
-                System.out.println("Неверный формат ID. Пожалуйста, введите число.");
-                scanner.next(); // Очистка некорректного ввода
-            }
-        }
-
-        return accountId;
-    }
-
-    // Отображение главного меню
-    private static void showMainMenu(Scanner scanner, int accountId) {
-        Account currentAccount = accounts[accountId];
-
-        while (true) {
-            System.out.println("\n=== Счет ID: " + accountId + " ===");
-            System.out.println("Основное меню");
-            System.out.println("1: проверить баланс счета");
-            System.out.println("2: снять со счета");
-            System.out.println("3: положить на счет");
-            System.out.println("4: выйти в меню выбора счета");
-            System.out.print("Введите пункт меню: ");
-
-            int choice;
-            if (scanner.hasNextInt()) {
-                choice = scanner.nextInt();
-            } else {
-                System.out.println("Неверный ввод. Пожалуйста, введите число от 1 до 4.");
-                scanner.next(); // Очистка некорректного ввода
-                continue;
-            }
+        boolean running = true;
+        while (running) {
+            printMenu();
+            int choice = getIntInput("Выберите опцию: ");
 
             switch (choice) {
-                case 1:
-                    checkBalance(currentAccount);
-                    break;
-                case 2:
-                    withdrawMoney(scanner, currentAccount);
-                    break;
-                case 3:
-                    depositMoney(scanner, currentAccount);
-                    break;
-                case 4:
-                    System.out.println("Выход из меню счета ID: " + accountId);
-                    return;
-                default:
-                    System.out.println("Неверный пункт меню. Пожалуйста, выберите от 1 до 4.");
-            }
-        }
-    }
-
-    // Проверка баланса
-    private static void checkBalance(Account account) {
-        System.out.printf("Текущий баланс: %.2f руб.\n", account.getBalance());
-    }
-
-    // Снятие денег
-    private static void withdrawMoney(Scanner scanner, Account account) {
-        System.out.print("Введите сумму для снятия со счета: ");
-        double amount;
-
-        if (scanner.hasNextDouble()) {
-            amount = scanner.nextDouble();
-            if (amount > 0) {
-                double oldBalance = account.getBalance();
-                account.withdraw(amount);
-                if (account.getBalance() < oldBalance) {
-                    System.out.printf("Успешно снято: %.2f руб.\n", amount);
-                    System.out.printf("Новый баланс: %.2f руб.\n", account.getBalance());
-                } else {
-                    System.out.println("Ошибка: Недостаточно средств для снятия");
+                case 1 -> createAccount();
+                case 2 -> depositMoney();
+                case 3 -> withdrawMoney();
+                case 4 -> transferMoney();
+                case 5 -> checkBalance();
+                case 6 -> showTransactionHistory();
+                case 7 -> showBankSummary();
+                case 0 -> {
+                    running = false;
+                    System.out.println("Выход из системы...");
                 }
-            } else {
-                System.out.println("Ошибка: Сумма для снятия должна быть положительной");
+                default -> System.out.println("Неверный выбор!");
             }
-        } else {
-            System.out.println("Ошибка: Неверный формат суммы");
-            scanner.next(); // Очистка некорректного ввода
+        }
+        scanner.close();
+    }
+
+    private static void printMenu() {
+        System.out.println("\n=== Главное меню ===");
+        System.out.println("1. Создать новый счёт");
+        System.out.println("2. Пополнить счёт");
+        System.out.println("3. Снять деньги");
+        System.out.println("4. Перевести деньги");
+        System.out.println("5. Проверить баланс");
+        System.out.println("6. История операций");
+        System.out.println("7. Общая информация банка");
+        System.out.println("0. Выход");
+    }
+
+    private static void initializeSampleData() {
+        try {
+            bankService.createAccount("1001", "Иван Иванов", 5000.0);
+            bankService.createAccount("1002", "Мария Петрова", 3000.0);
+            bankService.createAccount("1003", "Алексей Сидоров", 10000.0);
+            System.out.println("Демо-данные загружены!");
+        } catch (Exception e) {
+            System.out.println("Ошибка при создании демо-данных: " + e.getMessage());
         }
     }
 
-    // Пополнение счета
-    private static void depositMoney(Scanner scanner, Account account) {
-        System.out.print("Введите сумму для пополнения счета: ");
-        double amount;
+    private static void createAccount() {
+        System.out.println("\n=== Создание нового счёта ===");
+        String accountNumber = getStringInput("Введите номер счёта: ");
+        String ownerName = getStringInput("Введите имя владельца: ");
+        double initialBalance = getDoubleInput("Введите начальный баланс: ");
 
-        if (scanner.hasNextDouble()) {
-            amount = scanner.nextDouble();
-            if (amount > 0) {
-                account.deposit(amount);
-                System.out.printf("Успешно внесено: %.2f руб.\n", amount);
-                System.out.printf("Новый баланс: %.2f руб.\n", account.getBalance());
-            } else {
-                System.out.println("Ошибка: Сумма для пополнения должна быть положительной");
+        try {
+            Account account = bankService.createAccount(accountNumber, ownerName, initialBalance);
+            System.out.println("Счёт успешно создан!");
+            System.out.println(account.getAccountInfo());
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void depositMoney() {
+        System.out.println("\n=== Пополнение счёта ===");
+        String accountNumber = getStringInput("Введите номер счёта: ");
+        double amount = getDoubleInput("Введите сумму для пополнения: ");
+
+        try {
+            Account account = bankService.getAccount(accountNumber);
+            account.deposit(amount);
+            System.out.printf("Успешно пополнено: $%.2f%n", amount);
+            System.out.printf("Новый баланс: $%.2f%n", account.getBalance());
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void withdrawMoney() {
+        System.out.println("\n=== Снятие денег ===");
+        String accountNumber = getStringInput("Введите номер счёта: ");
+        double amount = getDoubleInput("Введите сумму для снятия: ");
+
+        try {
+            Account account = bankService.getAccount(accountNumber);
+            account.withdraw(amount);
+            System.out.printf("Успешно снято: $%.2f%n", amount);
+            System.out.printf("Новый баланс: $%.2f%n", account.getBalance());
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void transferMoney() {
+        System.out.println("\n=== Перевод денег ===");
+        String fromAccount = getStringInput("Введите номер счёта отправителя: ");
+        String toAccount = getStringInput("Введите номер счёта получателя: ");
+        double amount = getDoubleInput("Введите сумму перевода: ");
+
+        try {
+            bankService.transfer(fromAccount, toAccount, amount);
+            System.out.printf("Успешно переведено: $%.2f%n", amount);
+            System.out.printf("Со счёта %s на счёт %s%n", fromAccount, toAccount);
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void checkBalance() {
+        System.out.println("\n=== Проверка баланса ===");
+        String accountNumber = getStringInput("Введите номер счёта: ");
+
+        try {
+            Account account = bankService.getAccount(accountNumber);
+            System.out.println(account.getAccountInfo());
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void showTransactionHistory() {
+        System.out.println("\n=== История операций ===");
+        String accountNumber = getStringInput("Введите номер счёта: ");
+
+        try {
+            Account account = bankService.getAccount(accountNumber);
+            System.out.println("История операций для счёта " + accountNumber + ":");
+            for (String transaction : account.getTransactionHistory()) {
+                System.out.println("  • " + transaction);
             }
-        } else {
-            System.out.println("Ошибка: Неверный формат суммы");
-            scanner.next(); // Очистка некорректного ввода
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void showBankSummary() {
+        System.out.println("\n=== Общая информация банка ===");
+        System.out.printf("Общий баланс банка: $%.2f%n", bankService.getTotalBankBalance());
+        System.out.printf("Количество счетов: %d%n", bankService.getAccountsCount());
+    }
+
+    private static String getStringInput(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine().trim();
+    }
+
+    private static int getIntInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                return Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Пожалуйста, введите целое число!");
+            }
+        }
+    }
+
+    private static double getDoubleInput(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                return Double.parseDouble(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Пожалуйста, введите число!");
+            }
         }
     }
 }
