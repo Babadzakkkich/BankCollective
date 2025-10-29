@@ -69,9 +69,17 @@ class CurrencyIntegrationTest {
             double totalUsd = bankService.getTotalBankBalanceInCurrency("USD");
             double totalEur = bankService.getTotalBankBalanceInCurrency("EUR");
 
-            assertTrue(totalRub > 0);
+            // Баланс в рублях должен быть положительным (учитываем начальные 10 счетов по 10000)
+            assertTrue(totalRub >= 5000.0 + 500.0 + 400.0 + 100000.0); // 100000 - это 10 счетов по 10000
+
+            // Балансы в других валютах также должны быть положительными
             assertTrue(totalUsd > 0);
             assertTrue(totalEur > 0);
+
+            // Логируем для отладки
+            System.out.printf("Total RUB: %.2f%n", totalRub);
+            System.out.printf("Total USD: %.2f%n", totalUsd);
+            System.out.printf("Total EUR: %.2f%n", totalEur);
         });
     }
 }

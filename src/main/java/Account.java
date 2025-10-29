@@ -158,4 +158,14 @@ public class Account {
             return "Ошибка конвертации: " + e.getMessage();
         }
     }
+
+    public double getBalanceInCurrencyValue(String targetCurrency, CbrCurrencyService currencyService) {
+        try {
+            BigDecimal convertedAmount = currencyService.convert(
+                    BigDecimal.valueOf(balance), currencyCode, targetCurrency);
+            return convertedAmount.doubleValue();
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка конвертации", e);
+        }
+    }
 }

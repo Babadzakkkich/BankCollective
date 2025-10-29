@@ -160,15 +160,10 @@ public class BankService {
     public double getTotalBankBalanceInCurrency(String currencyCode) {
         double total = 0;
         for (Account account : accountMap.values()) {
-            String converted = account.getBalanceInCurrency(currencyCode, currencyService);
-            // Извлекаем число из строки "123.45 USD"
-            String[] parts = converted.split(" ");
-            if (parts.length > 0) {
-                try {
-                    total += Double.parseDouble(parts[0]);
-                } catch (NumberFormatException e) {
-                    // Игнорируем ошибки парсинга
-                }
+            try {
+                total += account.getBalanceInCurrencyValue(currencyCode, currencyService);
+            } catch (Exception e) {
+                System.err.println("Ошибка при конвертации счета " + account.getAccountNumber() + ": " + e.getMessage());
             }
         }
         return total;

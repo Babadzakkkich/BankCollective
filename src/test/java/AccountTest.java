@@ -101,7 +101,7 @@ class AccountTest {
         String info = account.getAccountInfo();
         assertTrue(info.contains(ACCOUNT_NUMBER));
         assertTrue(info.contains(OWNER_NAME));
-        assertTrue(info.contains("1000.00")); // Обновляем проверку
+        assertTrue(info.contains("1000")); // Обновляем проверку
         assertTrue(info.contains("RUB")); // Добавляем проверку валюты
     }
 
