@@ -18,6 +18,17 @@ class BankServiceTest {
         assertEquals("111", account.getAccountNumber());
         assertEquals("Alice", account.getOwnerName());
         assertEquals(1000.0, account.getBalance(), 0.001);
+        assertEquals("RUB", account.getCurrencyCode()); // Добавляем проверку валюты
+    }
+
+    @Test
+    void testCreateAccountWithCurrency() {
+        Account account = bankService.createAccount("111", "Alice", 1000.0, "USD");
+        assertNotNull(account);
+        assertEquals("111", account.getAccountNumber());
+        assertEquals("Alice", account.getOwnerName());
+        assertEquals(1000.0, account.getBalance(), 0.001);
+        assertEquals("USD", account.getCurrencyCode());
     }
 
     @Test
@@ -43,14 +54,27 @@ class BankServiceTest {
     }
 
     @Test
-    void testTransferBetweenAccounts() {
-        bankService.createAccount("111", "Alice", 1000.0);
-        bankService.createAccount("222", "Bob", 500.0);
+    void testTransferBetweenAccountsSameCurrency() {
+        bankService.createAccount("111", "Alice", 1000.0, "RUB");
+        bankService.createAccount("222", "Bob", 500.0, "RUB");
 
         bankService.transfer("111", "222", 300.0);
 
         assertEquals(700.0, bankService.getAccount("111").getBalance(), 0.001);
         assertEquals(800.0, bankService.getAccount("222").getBalance(), 0.001);
+    }
+
+    @Test
+    void testTransferBetweenAccountsDifferentCurrencies() {
+        // Для тестирования перевода между разными валютами нам нужен mock сервиса валют
+        // В этом тесте просто проверяем, что метод не падает с исключением
+        bankService.createAccount("111", "Alice", 1000.0, "RUB");
+        bankService.createAccount("222", "Bob", 500.0, "USD");
+
+        // Этот перевод вызовет конвертацию через currencyService
+        assertDoesNotThrow(() -> {
+            bankService.transfer("111", "222", 300.0);
+        });
     }
 
     @Test
@@ -80,7 +104,7 @@ class BankServiceTest {
 
     @Test
     void testGetTotalBankBalance() {
-        // Учитываем начальные 10 счетов по 10000 каждый
+        // Учитываем начальные 10 счетов по 10000 каждый в RUB
         double initialBalance = bankService.getTotalBankBalance();
 
         bankService.createAccount("111", "Alice", 1000.0);
@@ -89,6 +113,13 @@ class BankServiceTest {
 
         double totalBalance = bankService.getTotalBankBalance();
         assertEquals(initialBalance + 2250.0, totalBalance, 0.001);
+    }
+
+    @Test
+    void testGetTotalBankBalanceInCurrency() {
+        double balanceInUSD = bankService.getTotalBankBalanceInCurrency("USD");
+        // Проверяем, что метод выполняется без ошибок
+        assertTrue(balanceInUSD >= 0);
     }
 
     @Test
@@ -101,10 +132,10 @@ class BankServiceTest {
     }
 
     @Test
-    void testMultipleTransfers() {
-        bankService.createAccount("111", "Alice", 1000.0);
-        bankService.createAccount("222", "Bob", 500.0);
-        bankService.createAccount("333", "Charlie", 750.0);
+    void testMultipleTransfersSameCurrency() {
+        bankService.createAccount("111", "Alice", 1000.0, "RUB");
+        bankService.createAccount("222", "Bob", 500.0, "RUB");
+        bankService.createAccount("333", "Charlie", 750.0, "RUB");
 
         bankService.transfer("111", "222", 200.0);
         bankService.transfer("222", "333", 100.0);
@@ -127,5 +158,17 @@ class BankServiceTest {
         account2.withdraw(200.0);
         assertEquals(1100.0, account1.getBalance(), 0.001);
         assertEquals(300.0, account2.getBalance(), 0.001);
+    }
+
+    @Test
+    void testGetCurrencyService() {
+        assertNotNull(bankService.getCurrencyService());
+    }
+
+    @Test
+    void testGetAllAccounts() {
+        int initialSize = bankService.getAllAccounts().size();
+        bankService.createAccount("111", "Alice", 1000.0);
+        assertEquals(initialSize + 1, bankService.getAllAccounts().size());
     }
 }
