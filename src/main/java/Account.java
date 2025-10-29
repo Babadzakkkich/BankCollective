@@ -1,12 +1,14 @@
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class Account {
     private int id;
     private String accountNumber;
     private String ownerName;
     private double balance;
+    private String currencyCode; // Добавляем код валюты
     private double annualInterestRate;
     private Date dateCreated;
     private List<String> transactionHistory;
@@ -17,6 +19,7 @@ public class Account {
         this.accountNumber = "";
         this.ownerName = "";
         this.balance = 0;
+        this.currencyCode = "RUB"; // По умолчанию рубли
         this.annualInterestRate = 0;
         this.dateCreated = new Date();
         this.transactionHistory = new ArrayList<>();
@@ -27,21 +30,38 @@ public class Account {
         this.accountNumber = String.valueOf(id);
         this.ownerName = "Client " + id;
         this.balance = balance;
+        this.currencyCode = "RUB";
         this.annualInterestRate = 0;
         this.dateCreated = new Date();
         this.transactionHistory = new ArrayList<>();
-        addTransaction("Account created with initial balance: $" + balance);
+        addTransaction("Account created with initial balance: " + balance + " " + currencyCode);
     }
 
     public Account(String accountNumber, String ownerName, double initialBalance) {
-        this.id = nextId++; // Автоматически генерируем ID
+        this(accountNumber, ownerName, initialBalance, "RUB");
+    }
+
+    // Новый конструктор с поддержкой валют
+    public Account(String accountNumber, String ownerName, double initialBalance, String currencyCode) {
+        this.id = nextId++;
         this.accountNumber = accountNumber;
         this.ownerName = ownerName;
         this.balance = initialBalance;
+        this.currencyCode = currencyCode.toUpperCase();
         this.annualInterestRate = 0;
         this.dateCreated = new Date();
         this.transactionHistory = new ArrayList<>();
-        addTransaction("Account created with initial balance: $" + initialBalance);
+        addTransaction("Account created with initial balance: " + initialBalance + " " + currencyCode);
+    }
+
+    // Добавляем геттер и сеттер для валюты
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public void setCurrencyCode(String currencyCode) {
+        this.currencyCode = currencyCode.toUpperCase();
+        addTransaction("Currency changed to: " + currencyCode);
     }
 
     public int getId() {
@@ -100,9 +120,9 @@ public class Account {
     public void withdraw(double amount) {
         if (amount > 0 && amount <= balance) {
             balance -= amount;
-            addTransaction("Withdraw: $" + amount);
+            addTransaction("Withdraw: " + amount + " " + currencyCode);
         } else {
-            String message = "Failed withdraw attempt: $" + amount + ". Insufficient funds or invalid amount.";
+            String message = "Failed withdraw attempt: " + amount + " " + currencyCode + ". Insufficient funds or invalid amount.";
             System.out.println(message);
             addTransaction(message);
         }
@@ -111,9 +131,9 @@ public class Account {
     public void deposit(double amount) {
         if (amount > 0) {
             balance += amount;
-            addTransaction("Deposit: $" + amount);
+            addTransaction("Deposit: " + amount + " " + currencyCode);
         } else {
-            String message = "Failed deposit attempt: $" + amount + ". Amount must be positive.";
+            String message = "Failed deposit attempt: " + amount + " " + currencyCode + ". Amount must be positive.";
             System.out.println(message);
             addTransaction(message);
         }
@@ -125,7 +145,17 @@ public class Account {
     }
 
     public String getAccountInfo() {
-        return String.format("Account: %s, Owner: %s, Balance: $%.2f, Created: %s",
-                accountNumber, ownerName, balance, dateCreated);
+        return String.format("Account: %s, Owner: %s, Balance: %.2f %s, Created: %s",
+                accountNumber, ownerName, balance, currencyCode, dateCreated);
+    }
+
+    public String getBalanceInCurrency(String targetCurrency, CbrCurrencyService currencyService) {
+        try {
+            BigDecimal convertedAmount = currencyService.convert(
+                    BigDecimal.valueOf(balance), currencyCode, targetCurrency);
+            return String.format("%.2f %s", convertedAmount, targetCurrency);
+        } catch (Exception e) {
+            return "Ошибка конвертации: " + e.getMessage();
+        }
     }
 }
